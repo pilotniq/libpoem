@@ -1,0 +1,6 @@
+cd build/debug/osx
+cmake ../../.. -DCMAKE_BUILD_TYPE=Debug
+make
+cd ../nRF
+cmake ../../.. -DCMAKE_BUILD_TYPE=Debug -D
+cd ../../..
