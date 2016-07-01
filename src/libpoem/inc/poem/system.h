@@ -18,8 +18,6 @@ typedef struct sTimeoutTime
   uint32_t time;
 } sTimeoutTime, *TimeoutTime;
 
-void system_init( void );
-
 // Arbitrary time in milliseconds
 uint32_t system_timeMs_get(void);
 bool system_timeMs_isBefore( uint32_t t1, uint32_t t2 );
@@ -29,6 +27,11 @@ void system_timeout_unregister( TimeoutTime timeout );
 bool system_timeout_expired( TimeoutTime timeout );
 TimeoutTime system_timeout_getFirst( void );
 
+/*
+ * If system_setEventPending has been called since the call to system_waitForEvent, 
+ * then system_waitForEvent will return immediately 
+ */
+void system_setEventPending( void );
 void system_waitForEvent( void );
 
 #endif /* system_h */

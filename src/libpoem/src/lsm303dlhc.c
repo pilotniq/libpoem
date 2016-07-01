@@ -20,9 +20,9 @@
 #include <stdint.h>
 #include <math.H>
 
-#include "i2c.h"
+#include <poem/i2c.h>
 
-#include "lsm303dlhc.h"
+#include <poem/lsm303dlhc.h>
 
 struct sLSM303DLHC 
 {
@@ -41,8 +41,8 @@ struct sLSM303DLHC
  */
 static void writeReg1A();
 static void writeReg_MR_REG_M();
-static void writeAccReg( int reg, uint8_t value );
-static void writeMagReg( int reg, uint8_t value );
+static Error writeAccReg( int reg, uint8_t value );
+static Error writeMagReg( int reg, uint8_t value );
 
 // static uint32_t SquareRoot32(uint32_t a_nInput);
 static uint64_t SquareRoot64(uint64_t a_nInput);
@@ -105,27 +105,26 @@ static void writeReg_MR_REG_M()
   writeMagReg( MR_REG_M, sDevice.magMode );
 }
 
-static void writeAccReg( int reg, uint8_t value )
+static Error writeAccReg( int reg, uint8_t value )
 {
   uint8_t values[ 2 ];
-  ret_code_t retCode;
 
   values[0] = reg;
   values[1] = value;
 
-  retCode = i2c_write( sDevice.i2cChannel, ACC_ADDRESS, sizeof( values ), values, true );
-  retCode = retCode;
-
+  // should wrap subError.
+  return i2c_write( sDevice.i2cChannel, ACC_ADDRESS, sizeof( values ), values, true );
 }
 
-static void writeMagReg( int reg, uint8_t value )
+static Error writeMagReg( int reg, uint8_t value )
 {
   uint8_t values[ 2 ];
 
   values[0] = reg;
   values[1] = value;
 
-  i2c_write( sDevice.i2cChannel, MAG_ADDRESS, sizeof( values ), values, true );
+  // should wrap subError.
+  return i2c_write( sDevice.i2cChannel, MAG_ADDRESS, sizeof( values ), values, true );
 }
 
 // param: array of 3 int16_t

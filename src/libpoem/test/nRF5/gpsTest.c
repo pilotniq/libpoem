@@ -1,22 +1,25 @@
 //
-//  gpsTest.c
-//  bleGPS
+//  gpsTest.c for nRF
 //
 //  Created by Erland Lewin on 2016-05-18.
 //
 //
 
 #include <assert.h>
-#include <stdio.h>
 
 #include <poem/gps.h>
 #include <poem/error.h>
+#include <poem/logging.h>
 #include <poem/serial.h>
 #include <poem/system.h>
 
-#include <poem/unix/serial_unix.h>
 #include <poem/gps_ublox6.h>
 #include <poem/system.h>
+
+#include <poem/nRF5/serial_app_nRF5.h>
+#include <poem/nRF5/system_nRF5.h>
+
+#include "custom_board.h" // for NRF_CLOCK_LFCLKSRC
 
 typedef enum { STATE_WAIT_FOR_READY,
        STATE_READY,
@@ -38,22 +41,28 @@ static void stateControl( void );
 
 int main( int argc, char **argv )
 {
-  sSerialChannel serial;
+  // sSerialChannel serial;
   Error error;
-  
+  nrf_clock_lf_cfg_t lfClk = NRF_CLOCK_LFCLKSRC;
+
   ready = false;
-  system_init();
-  
-  error = unix_serial_init( &serial, argv[1], 9600 );
+  error = nRF5_system_init( 0, 0, &lfClk );
   if( error != NULL )
   {
-    fprintf( stderr, "serial_init failed: %s (%d) %s\n", error->moduleName, error->error, error->description );
+    log_printf( "nRF5_system_init failed: %s (%d) %s\n", error->moduleName, error->error, error->description );
+    return -1;
+  }
+
+  error = nrf51822_app_serial_init( NULL, 9600, 1, 6, 5, -1, -1 );
+  if( error != NULL )
+  {
+    log_printf( "serial_init failed: %s (%d) %s\n", error->moduleName, error->error, error->description );
     return -1;
   }
 
   state = STATE_WAIT_FOR_READY;
   
-  gps_ublox6_init( &serial, gpsReadyCallback );
+  gps_ublox6_init( NULL /* &serial */, gpsReadyCallback );
   
   done = false;
   while( !done )
@@ -80,10 +89,11 @@ static void stateControl( void )
     case STATE_OFF:
       if( system_timeout_expired( &timeout ))
       {
-        printf( "Turning on GPS\n");
+        log_printf( "Turning on GPS\n");
         gps_power_set( true );
       
-        stateNext( STATE_RECEIVING_POSITIONS );
+        stateNext( STATE_WAIT_FOR_READY );
+        // wait for ready callback
       }
       break;
       
@@ -102,7 +112,7 @@ static void stateNext( AppState newState )
   switch( newState )
   {
     case STATE_OFF:
-      printf( "TUrning GPS off.\n" );
+      log_printf( "Turning GPS off.\n" );
       error = gps_power_set( false );
       assert( !error );
       
@@ -124,7 +134,7 @@ static void stateNext( AppState newState )
 
 static void gpsReadyCallback( Error error )
 {
-  printf( "GPS is ready\n" );
+  log_printf( "GPS is ready\n" );
   
   ready = true;
   state = STATE_READY;
@@ -138,8 +148,16 @@ static void positionCallback( const sGPSPosition *position )
   if( state == STATE_READY )
     stateNext( STATE_RECEIVING_POSITIONS );
 
-  printf( "Long: %f lat: %f, accuracy: %f m\n",
-         ((double)position->longitude) / 1E7,
-         ((double)position->latitude) / 1E7,
-         ((double) position->accuracy) / 1000 );
+  // printf doesn't support float?
+#if 0
+  log_printf( "Long: %d, lat: %d, accuracy: %d m\n",
+	      ((double)position->longitude) / 1E7,
+	      ((double)position->latitude) / 1E7,
+	      ((double) position->accuracy) / 1000 );
+#else
+  log_printf( "Long: %d, lat: %d, accuracy: %d mm\n",
+	      position->longitude,
+	      position->latitude,
+	      position->accuracy / 1000 );
+#endif
 }

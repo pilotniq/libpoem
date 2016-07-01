@@ -1,6 +1,11 @@
 cd build/debug/osx
 cmake ../../.. -DCMAKE_BUILD_TYPE=Debug
 make
+
+cd build/nRF5-xcode
+cmake -DCMAKE_TOOLCHAIN_FILE=./Toolchain-nRF5.cmake -DCMAKE_BUILD_TYPE=Debug -G Xcode ../..
+
 cd ../nRF
 cmake ../../.. -DCMAKE_BUILD_TYPE=Debug -D
+cmake -DCMAKE_TOOLCHAIN_FILE=~/src/embeddedLib/build/nRF5/Toolchain-nRF5.cmake -DCMAKE_BUILD_TYPE=Debug ../..
 cd ../../..

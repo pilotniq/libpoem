@@ -9,6 +9,7 @@
 #include <stdio.h> // for debugging
 #include <string.h> // for memcpy
 
+#include <poem/logging.h>
 #include <poem/serial.h>
 #include <poem/gps.h>
 #include <poem/gps_ublox6.h>
@@ -86,6 +87,26 @@ typedef enum
   STATE_SENDING_UBLOX_WAIT_ACK,
   STATE_OFF
 } State;
+
+const char *stateNames[] = { "NMEA Set Protocols Write", 
+			     "Polling Version Sending", 
+			     "Polling Version waiting",
+			     "Disable NMEA Write",
+  "DISABLE_NMEA_WAIT_ACK",
+  "LOCK_WAIT_WRITE",
+  "LOCK_WAIT_ACK",
+  "LOCK_WAIT",
+  "SET_PSM_WRITE",
+  "SET_PSM_WAIT_ACK",
+  "AFTER_PSM_WAIT",  // wait one second
+  "READY",
+  "SENDING_UBLOX",
+  "SENDING_UBLOX_WAKEUP",
+  "SENDING_UBLOX_PREWAIT",
+  "SENDING_UBLOX_SENDING",
+  "SENDING_UBLOX_WAIT_ACK",
+  "OFF"
+};
 
 /*
  * static function prototypes
@@ -190,6 +211,8 @@ static void serviceWrite( void )
         break;
         
       case STATE_POLLING_VERSION_SENDING:
+	log_printf( "Polling version sending\r\n" );
+
         error = serial_writeFromBuffer( serial, uBloxSendBuffer, 8, &uBloxSendProcessedCount, &sendDone );
         assert( error == NULL );
         if( sendDone )
@@ -199,14 +222,23 @@ static void serviceWrite( void )
       case STATE_POLLING_VERSION_WAITING:
         if( system_timeout_expired( &timeout ) )
         {
-          printf( "Polling version wait, timeout expired\n" );
+          log_printf( "Polling version wait, timeout expired\n" );
           rewrite = nextState( STATE_POLLING_VERSION_SENDING );
         }
+	else
+	{
+	  // uint32_t now;
+
+	  // now = system_timeMs_get();
+	  log_printf( "." ); // "Version Waiting, time=%d\n", now );
+	}
         break; // don't send anything
         
       case STATE_DISABLE_NMEA_WRITE:
         error = serial_writeFromBuffer( serial, uBloxSendBuffer, 20+8, &uBloxSendProcessedCount, &sendDone );
         assert( error == NULL );
+
+	log_printf( "Disable NMEA Write 2: processedCount=%d, sendDone=%d\n", uBloxSendProcessedCount, (int) sendDone );
         if( sendDone )
           rewrite = nextState( STATE_DISABLE_NMEA_WAIT_ACK );
         break;
@@ -214,7 +246,7 @@ static void serviceWrite( void )
       case STATE_DISABLE_NMEA_WAIT_ACK:
         if( system_timeout_expired( &timeout ) )
         {
-          printf( "Disable NMEA Wait Ack, timeout expired\n" );
+          log_printf( "Disable NMEA Wait Ack, timeout expired\n" );
           rewrite = nextState( STATE_DISABLE_NMEA_WRITE );
         }
         break;
@@ -238,7 +270,7 @@ static void serviceWrite( void )
       case STATE_SET_PSM_WAIT_ACK:
         if( system_timeout_expired( &timeout ) )
         {
-          printf( "Disable Set PSM Ack, timeout expired\n" );
+          log_printf( "Disable Set PSM Ack, timeout expired\n" );
           rewrite = nextState( STATE_SET_PSM_WRITE );
         }
         break;
@@ -246,7 +278,7 @@ static void serviceWrite( void )
       case STATE_AFTER_PSM_WAIT:
         if( system_timeout_expired( &timeout ) )
         {
-          printf( "Waited one sec after PSM\n" );
+          log_printf( "Waited one sec after PSM\n" );
           rewrite = nextState( STATE_READY );
         }
         break;
@@ -270,7 +302,7 @@ static void serviceWrite( void )
       case STATE_SENDING_UBLOX_PREWAIT:
         if( system_timeout_expired( &timeout ) )
         {
-          printf( "UBlox prewait expired.\n" );
+          log_printf( "UBlox prewait expired.\n" );
           rewrite = nextState( STATE_SENDING_UBLOX_SENDING );
         }
         break;
@@ -292,7 +324,7 @@ static void serviceWrite( void )
         /*
          if( system_timeout_expired( &timeout ) )
          {
-         printf( "Polling version wait, timeout expired\n" );
+         log_printf( "Polling version wait, timeout expired\n" );
          nextState( STATE_DISABLE_NMEA_WRITE );
          }
          */
@@ -338,7 +370,7 @@ static void serviceRead( void )
               break;
               
             default:
-              printf( "Received junk character %02x\n", readBuffer[0]);
+              log_printf( "Received junk character %02x\n", readBuffer[0]);
           }
         }
         break;
@@ -379,9 +411,16 @@ static void serviceRead( void )
           }
           else
           {
-            assert( ubloxPayloadLength < 300 );
-            readCursor = 0;
-            readState = READSTATE_UBLOX_PAYLOAD;
+            if( ubloxPayloadLength > 300 )
+              readState = READSTATE_OUTSIDE; // junk
+            else
+            {
+              assert( ubloxPayloadLength < 300 );
+              readCursor = 0;
+              readState = READSTATE_UBLOX_PAYLOAD;
+
+	      log_printf( "UBlox: Going head to payload read\r\n" );
+            }
           }
           reread = true;
         }
@@ -389,7 +428,7 @@ static void serviceRead( void )
         
       case READSTATE_UBLOX_PAYLOAD:
         assert( ubloxPayloadLength < 300 );
-        
+
         error = serial_readToBuffer( serial, &(readBuffer[6]), ubloxPayloadLength, &readCursor, &done );
         if( done )
         {
@@ -443,7 +482,7 @@ static void handleUBlox()
   if( readBuffer[ readCursor - 2 ] != (checksum & 0xff) ||
       readBuffer[ readCursor - 1 ] != ((checksum >> 8) & 0xff))
   {
-    printf( "UBlox received packet has bad checksum\n" );
+    log_printf( "UBlox received packet has bad checksum\n" );
     
     return;
   }
@@ -453,7 +492,7 @@ static void handleUBlox()
   class = (UBloxClass) readBuffer[0];
   id = (UBloxID) readBuffer[1];
   
-  // printf( "Got UBlox packet class %02x, id %02x\n", class, id );
+  log_printf( "Got UBlox packet class %02x, id %02x\n", class, id );
   
   switch( class )
   {
@@ -469,12 +508,12 @@ static void handleUBlox()
               // fall-through
               
             case STATE_DISABLE_NMEA_WRITE:
-              printf( "Got ack in STATE_DISABLE_NMEA_WRITE, Going to STATE_LOCK_WAIT_WRITE!\n" );
+              log_printf( "Got ack in STATE_DISABLE_NMEA_WRITE, Going to STATE_LOCK_WAIT_WRITE!\n" );
               nextState( STATE_LOCK_WAIT_WRITE );
               break;
 
             case STATE_LOCK_WAIT_ACK:
-              printf( "Got ack in Lock wait ack\n" );
+              log_printf( "Got ack in Lock wait ack\n" );
               nextState( STATE_LOCK_WAIT );
               break;
               
@@ -488,18 +527,18 @@ static void handleUBlox()
               break;
 
             case STATE_SENDING_UBLOX_WAIT_ACK:
-              printf( "Got ack in STATE_SENDING_UBLOX_WAIT_ACK, Going to Ready!\n" );
+              log_printf( "Got ack in STATE_SENDING_UBLOX_WAIT_ACK, Going to Ready!\n" );
               nextState(STATE_SET_PSM_WRITE);
               break;
               
             default:
               nextState( STATE_READY );
-              printf( "Ublox6 GPS: Ignoring a ACK-ACK packet because state is %d\n", state );
+              log_printf( "Ublox6 GPS: Ignoring a ACK-ACK packet because state is %d\n", state );
           }
           break;
           
         default:
-          printf( "Ublox6 GPS: Ignoring a ACK packet with id %02x\n", id );
+          log_printf( "Ublox6 GPS: Ignoring a ACK packet with id %02x\n", id );
       }
       break;
       
@@ -510,20 +549,21 @@ static void handleUBlox()
           switch( state )
           {
             case STATE_POLLING_VERSION_WAITING:
-              system_timeout_unregister( &timeout );
+              system_timeout_unregister( &timeout );  // only unregister timeout if waiting.
               // fall-through
               
             case STATE_POLLING_VERSION_SENDING:
-              printf( "Got MON VER while polling!\n");
+              log_printf( "Got MON VER for version waiting/ending!\n");
               nextState( STATE_DISABLE_NMEA_WRITE );
-              
+              break;
+
             default:
-              printf( "ublox6 gps: ignoring MON VER packet, state=%d\n", state );
+              log_printf( "ublox6 gps: ignoring MON VER packet, state=%d\n", state );
           }
           break;
           
         default:
-          printf( "Ublox6 GPS: Ignoring a MON packet with id %02x\n", id );
+          log_printf( "Ublox6 GPS: Ignoring a MON packet with id %02x\n", id );
           break;
       }
       break;
@@ -533,7 +573,7 @@ static void handleUBlox()
       {
         case UBLOX_NAV_POSLLH:
           if( positionCallback == NULL )
-            printf( "ublox6 gps: got POSLLH, but no callback registered\n");
+            log_printf( "ublox6 gps: got POSLLH, but no callback registered\n");
           else
           {
             position.longitude = ((uint32_t)readBuffer[8]) |
@@ -567,24 +607,24 @@ static void handleUBlox()
             // actually, want > 4 here, changed to 3 for testing inside window
             if( (fixType > 0) && (satCount > 4) )
             {
-              printf( "Got good fix, Fix: %d, Sat count=%d\n",
+              log_printf( "Got good fix, Fix: %d, Sat count=%d\n",
                      fixType, satCount );
               nextState( STATE_SET_PSM_WRITE );
             }
             else
-              printf( "Waiting for good fix: Fix: %d, Sat count=%d\n",
+              log_printf( "Waiting for good fix: Fix: %d, Sat count=%d\n",
                      fixType, satCount );
           }
           break;
           
         default:
-          printf( "Ublox6 GPS: Ignoring a NAV packet with id %02x\n", id );
+          log_printf( "Ublox6 GPS: Ignoring a NAV packet with id %02x\n", id );
           break;
       }
       break;
       
     default:
-      printf( "Received a UBlox packet of class %02x, with id %02x\n", class, id );
+      log_printf( "Received a UBlox packet of class %02x, with id %02x\n", class, id );
       break;
   }
 }
@@ -611,7 +651,7 @@ static void handleNMEA()
   // debug printout
   readBuffer[ readCursor-2 ] = '\0'; // remove CR LF
   
-  printf( "Received NMEA: %s\n", readBuffer );
+  log_printf( "N" ); // Received NMEA\n" ); // : %s\n", readBuffer );
 }
 
 
@@ -634,7 +674,7 @@ static bool nextState( State newState )
 {
   Error error;
   bool sendDone, rewrite = false;
-  State oldState;
+  // State oldState;
   uint8_t disableNMEA[20] = { 1, /* UART port */
                               0, /* reserved d*/
                               0, 0, /* txReady */
@@ -646,10 +686,11 @@ static bool nextState( State newState )
                               0x00, 0x00, /* reserved5 */ };
   uint8_t setPSMcyclic[2] = { 8, 1 };
   uint8_t navSolPollData[3] = { UBLOX_CLASS_NAV, UBLOX_NAV_SOL, 1 };
+  uint32_t now;
+
+  log_printf( "Ublox 6: nextState( %d '%s')\n", newState, stateNames[ newState ] );
   
-  // printf( "Ublox 6: nextState( %d )\n", newState );
-  
-  oldState = state;
+  // oldState = state;
   state = newState;
 
   switch( newState )
@@ -682,8 +723,10 @@ static bool nextState( State newState )
       
     case STATE_POLLING_VERSION_WAITING:
       // set up timeout of 1 second
-      timeout.time = system_timeMs_get() + 1000;
+      now = system_timeMs_get();
+      timeout.time = now + 1000;
       system_timeout_register( &timeout );
+      printf( "Timeout time=%ld + 1000 = %ld\n", now, timeout.time );
       rewrite = false;
       break;
       
@@ -694,7 +737,8 @@ static bool nextState( State newState )
       uBloxSendProcessedCount = 0;
       error = serial_writeFromBuffer( serial, uBloxSendBuffer, 20+8, &uBloxSendProcessedCount, &sendDone );
       assert( error == NULL );
-      
+      printf( "Disable NMEA Write 1: sendDone=%d, preocessedCount=%d\n", (int) sendDone, uBloxSendProcessedCount );
+
       rewrite = true;
       // state = sendDone ? STATE_DISABLE_NMEA_WAIT_ACK : // STATE_DISABLE_NMEA_WRITE;
       break;
@@ -793,6 +837,7 @@ static bool nextState( State newState )
     case STATE_OFF:
       // TODO: send Off command?
       rewrite = true;
+      notifiedReady = false; // send ready again after off.
       break;
   }
   
@@ -870,6 +915,7 @@ Error gps_power_set( bool on )
   if( on )
   {
     // data[ 4 ] = 0;
+    notifiedReady = false;
     nextState( STATE_POLLING_VERSION_SENDING );
   }
   else
@@ -879,7 +925,6 @@ Error gps_power_set( bool on )
     prepareUBloxSendMessage( uBloxSendBuffer, sizeof( uBloxSendBuffer),
                             UBLOX_CLASS_RXM,
                             UBLOX_RXM_PMREQ, 8, data );
-    
     nextState( STATE_SENDING_UBLOX );
   }
   return NULL;

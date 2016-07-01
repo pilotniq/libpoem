@@ -1,9 +1,9 @@
 cmake_minimum_required(VERSION 3.2)
 cmake_policy( SET CMP0048 NEW )
 
-project(poem VERSION 0.1 LANGUAGES C)
+project(poem VERSION 0.1 LANGUAGES C ASM)
 
-set(CMAKE_CXX_FLAGS "-Wall")
+# set(CMAKE_CXX_FLAGS "-Wall")
 
 # add_library( poem error.c unix.c serial_osx.c )
 # add_executable( ubloxTest ubloxTest.c )

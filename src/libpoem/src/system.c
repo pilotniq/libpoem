@@ -58,6 +58,7 @@ void system_timeout_register( TimeoutTime timeout )
       firstTimeout = timeout;
       timeout->prev = NULL;
       timeout->next = timeoutAfter;
+      timeoutAfter->prev = timeout;
     }
     else
     {

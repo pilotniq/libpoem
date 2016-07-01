@@ -10,6 +10,10 @@
 #include <unistd.h> // for ssize_t
 #include "error.h"
 
+enum {
+  SERIAL_ERR_INVALID_BAUDRATE
+};
+
 typedef struct sSerialChannel *SerialChannel;
 
 /*
@@ -29,6 +33,8 @@ Error serial_write( SerialChannel channel, const uint8_t *buffer, int *length );
  */
 Error serial_read( SerialChannel channel, uint8_t *buffer, int *length );
 
+/*
+ */
 Error serial_writeFromBuffer( SerialChannel channel, const uint8_t *buffer, int bufferSize, int *cursor,
                               bool *done);
 

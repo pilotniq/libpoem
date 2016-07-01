@@ -46,7 +46,7 @@ int main( int argc, char **argv )
   error = unix_serial_init( &serial, argv[1], 9600 );
   if( error != NULL )
   {
-    fprintf( stderr, "serial_init failed: %s (%d) %s\n", error->moduleName, error->error, error->description );
+    log_printf( stderr, "serial_init failed: %s (%d) %s\n", error->moduleName, error->error, error->description );
     return -1;
   }
 
