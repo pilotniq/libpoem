@@ -5,11 +5,21 @@
 //  Created by Erland Lewin on 2016-05-20.
 //
 //
+#define NDEBUG // afraid assert pulls in printf which makes us run out of code memory.
 #include <assert.h>
-#include <stdio.h> // just for debugging
-#include <unistd.h>
+// #include <stdio.h> // just for debugging
+#include <stdint.h>
+#include <stdlib.h> // for NULL
+
+// Keil 8051 compiler doesn't have unistd.h
+// #include <unistd.h>
 
 #include <poem/system.h>
+
+// Keil 8051 C51 compiler doesn't have UINT32_MAX
+#ifndef UINT32_MAX
+#define UINT32_MAX 4294967295
+#endif
 
 // TODO: Abstract to generic linked list
 TimeoutTime firstTimeout, lastTimeout;
@@ -24,7 +34,7 @@ void system_timeout_register( TimeoutTime timeout )
 {
   TimeoutTime timeoutAfter;
   
-  printf( "Timeout: registering %p\n", timeout );
+  // printf( "Timeout: registering %p\n", timeout );
   
   for( timeoutAfter = firstTimeout;
       (timeoutAfter != NULL) && system_timeMs_isBefore( timeoutAfter->time, timeout->time );
@@ -80,7 +90,7 @@ bool system_timeMs_isBefore( uint32_t t1, uint32_t t2 )
 
 void system_timeout_unregister( TimeoutTime timeout )
 {
-  printf( "timoeut: unregistering timeout %p\n", timeout );
+  // printf( "timeout: unregistering timeout %p\n", timeout );
   
   if( timeout->prev == NULL )
   {

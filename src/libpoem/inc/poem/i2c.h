@@ -19,8 +19,19 @@ typedef struct sI2Cchannel *I2Cchannel;
 enum { I2C_ERR_INVALID_FREQUENCY };
 
 // TODO: Make error handling generic
-Error i2c_read( I2Cchannel I2Cchannel, uint8_t address, uint32_t length, uint8_t *data );
-Error i2c_write( I2Cchannel I2Cchannel, uint8_t address, uint32_t length, const uint8_t *data, 
-		 bool stopAfter );
+// Error i2c_read( I2Cchannel channel, uint8_t address, uint32_t length, uint8_t *data );
+// Error i2c_write( I2Cchannel channel, uint8_t address, uint32_t length, const uint8_t *data,
+// 		 bool stopAfter );
+
+/*
+ *  i2c slave api
+ *
+ *  init slave with address, and input buffer
+ *  regularly poll i2c? NOP if irq-driven
+ *  main loop checks if packet has arrived.
+ *  if so, it returns data
+ *
+ */
+//void i2c_slave_
 
 #endif

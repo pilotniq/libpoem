@@ -5,6 +5,6 @@
 #ifndef POEM_LOGGING_H
 #define POEM_LOGGING_H
 
-void log_printf( const char *format, ... );
+void poem_log_printf( const char *format, ... );
 
 #endif

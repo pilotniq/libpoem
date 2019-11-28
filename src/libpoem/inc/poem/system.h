@@ -34,4 +34,10 @@ TimeoutTime system_timeout_getFirst( void );
 void system_setEventPending( void );
 void system_waitForEvent( void );
 
+// system_reset must be implemented by the application. It is called on reset and startup
+// TODO: pass reason argument to detect if it was due to powerup, brownout,
+void system_reset( void );
+
+void system_delayMs( int ms );
+
 #endif /* system_h */

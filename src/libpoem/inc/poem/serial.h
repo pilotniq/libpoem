@@ -7,7 +7,7 @@
 
 #include <stdbool.h>
 #include <stdint.h>
-#include <unistd.h> // for ssize_t
+// #include <unistd.h> // for ssize_t
 #include "error.h"
 
 enum {

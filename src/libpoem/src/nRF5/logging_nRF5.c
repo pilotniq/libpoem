@@ -69,7 +69,7 @@ Error logging_init(void)
 
 int SEGGER_RTT_vprintf(unsigned BufferIndex, const char * sFormat, va_list * pParamList);
 
-void log_printf( const char *format, ... )
+void poem_log_printf( const char *format, ... )
 {
     va_list p_args;
     va_start(p_args, format);
