@@ -15,7 +15,11 @@ set(CMAKE_C_FLAGS "-Wno-unused-label" )
 set(LIB_LIST "src/error.c" src/circularBuffer.c src/uBlox6/gps_ublox6.c src/serial.c src/system.c)
 
 if(UNIX)
-  set(LIB_LIST ${LIB_LIST} "src/unix/serial_unix.c" "src/unix/error_unix.c" )
+  set(LIB_LIST ${LIB_LIST} 
+               "src/unix/serial_unix.c" 
+               "src/unix/error_unix.c"
+               "src/unix/logging_unix.c"
+               "src/unix/system_unix.c" )
   add_executable( ubloxTest src/ubloxTest.c )
   target_link_libraries( ubloxTest poem )
   add_executable( gpsTest test/unix/gpsTest.c )
