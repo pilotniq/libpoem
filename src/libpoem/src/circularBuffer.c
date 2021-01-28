@@ -23,7 +23,7 @@
               tail                 head   
   element3  element4             element1  element2
 */
-
+#define NDEBUG /* to debug C51 - if assert causes large memory use */
 #include <assert.h>
 #include <stdlib.h>
 #include <stdint.h>

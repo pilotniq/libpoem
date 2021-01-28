@@ -11,6 +11,7 @@
 typedef struct sI2Cchannel
 { 
   nrf_drv_twi_t twi;
+  int errorModule;
 } sI2Cchannel;
 
 ret_code_t nrf51822_i2c_init( I2Cchannel i2cChannel,

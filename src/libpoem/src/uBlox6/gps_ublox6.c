@@ -211,7 +211,7 @@ static void serviceWrite( void )
         break;
         
       case STATE_POLLING_VERSION_SENDING:
-	log_printf( "Polling version sending\r\n" );
+	      poem_log_printf( "Polling version sending\r\n" );
 
         error = serial_writeFromBuffer( serial, uBloxSendBuffer, 8, &uBloxSendProcessedCount, &sendDone );
         assert( error == NULL );
@@ -222,7 +222,7 @@ static void serviceWrite( void )
       case STATE_POLLING_VERSION_WAITING:
         if( system_timeout_expired( &timeout ) )
         {
-          log_printf( "Polling version wait, timeout expired\n" );
+          poem_log_printf( "Polling version wait, timeout expired\n" );
           rewrite = nextState( STATE_POLLING_VERSION_SENDING );
         }
 	else
@@ -230,7 +230,7 @@ static void serviceWrite( void )
 	  // uint32_t now;
 
 	  // now = system_timeMs_get();
-	  log_printf( "." ); // "Version Waiting, time=%d\n", now );
+	  poem_log_printf( "." ); // "Version Waiting, time=%d\n", now );
 	}
         break; // don't send anything
         
@@ -238,7 +238,7 @@ static void serviceWrite( void )
         error = serial_writeFromBuffer( serial, uBloxSendBuffer, 20+8, &uBloxSendProcessedCount, &sendDone );
         assert( error == NULL );
 
-	log_printf( "Disable NMEA Write 2: processedCount=%d, sendDone=%d\n", uBloxSendProcessedCount, (int) sendDone );
+	poem_log_printf( "Disable NMEA Write 2: processedCount=%d, sendDone=%d\n", uBloxSendProcessedCount, (int) sendDone );
         if( sendDone )
           rewrite = nextState( STATE_DISABLE_NMEA_WAIT_ACK );
         break;
@@ -246,7 +246,7 @@ static void serviceWrite( void )
       case STATE_DISABLE_NMEA_WAIT_ACK:
         if( system_timeout_expired( &timeout ) )
         {
-          log_printf( "Disable NMEA Wait Ack, timeout expired\n" );
+          poem_log_printf( "Disable NMEA Wait Ack, timeout expired\n" );
           rewrite = nextState( STATE_DISABLE_NMEA_WRITE );
         }
         break;
@@ -270,7 +270,7 @@ static void serviceWrite( void )
       case STATE_SET_PSM_WAIT_ACK:
         if( system_timeout_expired( &timeout ) )
         {
-          log_printf( "Disable Set PSM Ack, timeout expired\n" );
+          poem_log_printf( "Disable Set PSM Ack, timeout expired\n" );
           rewrite = nextState( STATE_SET_PSM_WRITE );
         }
         break;
@@ -278,7 +278,7 @@ static void serviceWrite( void )
       case STATE_AFTER_PSM_WAIT:
         if( system_timeout_expired( &timeout ) )
         {
-          log_printf( "Waited one sec after PSM\n" );
+          poem_log_printf( "Waited one sec after PSM\n" );
           rewrite = nextState( STATE_READY );
         }
         break;
@@ -302,7 +302,7 @@ static void serviceWrite( void )
       case STATE_SENDING_UBLOX_PREWAIT:
         if( system_timeout_expired( &timeout ) )
         {
-          log_printf( "UBlox prewait expired.\n" );
+          poem_log_printf( "UBlox prewait expired.\n" );
           rewrite = nextState( STATE_SENDING_UBLOX_SENDING );
         }
         break;
@@ -324,7 +324,7 @@ static void serviceWrite( void )
         /*
          if( system_timeout_expired( &timeout ) )
          {
-         log_printf( "Polling version wait, timeout expired\n" );
+         poem_log_printf( "Polling version wait, timeout expired\n" );
          nextState( STATE_DISABLE_NMEA_WRITE );
          }
          */
@@ -370,7 +370,7 @@ static void serviceRead( void )
               break;
               
             default:
-              log_printf( "Received junk character %02x\n", readBuffer[0]);
+              poem_log_printf( "Received junk character %02x\n", readBuffer[0]);
           }
         }
         break;
@@ -419,7 +419,7 @@ static void serviceRead( void )
               readCursor = 0;
               readState = READSTATE_UBLOX_PAYLOAD;
 
-	      log_printf( "UBlox: Going head to payload read\r\n" );
+	      poem_log_printf( "UBlox: Going head to payload read\r\n" );
             }
           }
           reread = true;
@@ -482,7 +482,7 @@ static void handleUBlox()
   if( readBuffer[ readCursor - 2 ] != (checksum & 0xff) ||
       readBuffer[ readCursor - 1 ] != ((checksum >> 8) & 0xff))
   {
-    log_printf( "UBlox received packet has bad checksum\n" );
+    poem_log_printf( "UBlox received packet has bad checksum\n" );
     
     return;
   }
@@ -492,7 +492,7 @@ static void handleUBlox()
   class = (UBloxClass) readBuffer[0];
   id = (UBloxID) readBuffer[1];
   
-  log_printf( "Got UBlox packet class %02x, id %02x\n", class, id );
+  poem_log_printf( "Got UBlox packet class %02x, id %02x\n", class, id );
   
   switch( class )
   {
@@ -508,12 +508,12 @@ static void handleUBlox()
               // fall-through
               
             case STATE_DISABLE_NMEA_WRITE:
-              log_printf( "Got ack in STATE_DISABLE_NMEA_WRITE, Going to STATE_LOCK_WAIT_WRITE!\n" );
+              poem_log_printf( "Got ack in STATE_DISABLE_NMEA_WRITE, Going to STATE_LOCK_WAIT_WRITE!\n" );
               nextState( STATE_LOCK_WAIT_WRITE );
               break;
 
             case STATE_LOCK_WAIT_ACK:
-              log_printf( "Got ack in Lock wait ack\n" );
+              poem_log_printf( "Got ack in Lock wait ack\n" );
               nextState( STATE_LOCK_WAIT );
               break;
               
@@ -527,18 +527,18 @@ static void handleUBlox()
               break;
 
             case STATE_SENDING_UBLOX_WAIT_ACK:
-              log_printf( "Got ack in STATE_SENDING_UBLOX_WAIT_ACK, Going to Ready!\n" );
+              poem_log_printf( "Got ack in STATE_SENDING_UBLOX_WAIT_ACK, Going to Ready!\n" );
               nextState(STATE_SET_PSM_WRITE);
               break;
               
             default:
               nextState( STATE_READY );
-              log_printf( "Ublox6 GPS: Ignoring a ACK-ACK packet because state is %d\n", state );
+              poem_log_printf( "Ublox6 GPS: Ignoring a ACK-ACK packet because state is %d\n", state );
           }
           break;
           
         default:
-          log_printf( "Ublox6 GPS: Ignoring a ACK packet with id %02x\n", id );
+          poem_log_printf( "Ublox6 GPS: Ignoring a ACK packet with id %02x\n", id );
       }
       break;
       
@@ -553,17 +553,17 @@ static void handleUBlox()
               // fall-through
               
             case STATE_POLLING_VERSION_SENDING:
-              log_printf( "Got MON VER for version waiting/ending!\n");
+              poem_log_printf( "Got MON VER for version waiting/ending!\n");
               nextState( STATE_DISABLE_NMEA_WRITE );
               break;
 
             default:
-              log_printf( "ublox6 gps: ignoring MON VER packet, state=%d\n", state );
+              poem_log_printf( "ublox6 gps: ignoring MON VER packet, state=%d\n", state );
           }
           break;
           
         default:
-          log_printf( "Ublox6 GPS: Ignoring a MON packet with id %02x\n", id );
+          poem_log_printf( "Ublox6 GPS: Ignoring a MON packet with id %02x\n", id );
           break;
       }
       break;
@@ -573,7 +573,7 @@ static void handleUBlox()
       {
         case UBLOX_NAV_POSLLH:
           if( positionCallback == NULL )
-            log_printf( "ublox6 gps: got POSLLH, but no callback registered\n");
+            poem_log_printf( "ublox6 gps: got POSLLH, but no callback registered\n");
           else
           {
             position.longitude = ((uint32_t)readBuffer[8]) |
@@ -607,24 +607,24 @@ static void handleUBlox()
             // actually, want > 4 here, changed to 3 for testing inside window
             if( (fixType > 0) && (satCount > 4) )
             {
-              log_printf( "Got good fix, Fix: %d, Sat count=%d\n",
+              poem_log_printf( "Got good fix, Fix: %d, Sat count=%d\n",
                      fixType, satCount );
               nextState( STATE_SET_PSM_WRITE );
             }
             else
-              log_printf( "Waiting for good fix: Fix: %d, Sat count=%d\n",
+              poem_log_printf( "Waiting for good fix: Fix: %d, Sat count=%d\n",
                      fixType, satCount );
           }
           break;
           
         default:
-          log_printf( "Ublox6 GPS: Ignoring a NAV packet with id %02x\n", id );
+          poem_log_printf( "Ublox6 GPS: Ignoring a NAV packet with id %02x\n", id );
           break;
       }
       break;
       
     default:
-      log_printf( "Received a UBlox packet of class %02x, with id %02x\n", class, id );
+      poem_log_printf( "Received a UBlox packet of class %02x, with id %02x\n", class, id );
       break;
   }
 }
@@ -651,7 +651,7 @@ static void handleNMEA()
   // debug printout
   readBuffer[ readCursor-2 ] = '\0'; // remove CR LF
   
-  log_printf( "N" ); // Received NMEA\n" ); // : %s\n", readBuffer );
+  poem_log_printf( "N" ); // Received NMEA\n" ); // : %s\n", readBuffer );
 }
 
 
@@ -688,7 +688,7 @@ static bool nextState( State newState )
   uint8_t navSolPollData[3] = { UBLOX_CLASS_NAV, UBLOX_NAV_SOL, 1 };
   uint32_t now;
 
-  log_printf( "Ublox 6: nextState( %d '%s')\n", newState, stateNames[ newState ] );
+  poem_log_printf( "Ublox 6: nextState( %d '%s')\n", newState, stateNames[ newState ] );
   
   // oldState = state;
   state = newState;

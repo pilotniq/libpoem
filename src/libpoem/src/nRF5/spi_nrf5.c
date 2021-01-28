@@ -1,6 +1,8 @@
 #include <poem/error.h>
 #include <poem/nrf5/spi_nrf5.h>
 #include <poem/nrf5/error_nRF5.h>
+
+#include "sdk_config.h"
 #include "nrf_drv_spi.h"
 
 static int errorModule = -1;

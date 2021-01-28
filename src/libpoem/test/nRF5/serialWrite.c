@@ -48,7 +48,8 @@ int main( int argc, char **argv )
   Error error;
   nrf_clock_lf_cfg_t lfClk = NRF_CLOCK_LFCLKSRC;
 
-  error = nRF5_system_init( 0, 0, &lfClk );
+  // error = nRF5_system_init( 0, 0, &lfClk );
+  error = nRF5_system_init();
   assert( error == NULL );
 
   error = nrf51822_app_serial_init( NULL, 9600, APP_IRQ_PRIORITY_HIGH, UART_TX_PIN, UART_RX_PIN, -1, -1 );

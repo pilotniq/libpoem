@@ -266,3 +266,8 @@ void system_delayMs( int ms )
 {
   nrf_delay_ms( ms );
 }
+
+void system_delayUs( int us )
+{
+  nrf_delay_us( us );
+}

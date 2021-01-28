@@ -39,5 +39,6 @@ void system_waitForEvent( void );
 void system_reset( void );
 
 void system_delayMs( int ms );
+void system_delayUs( int us );
 
 #endif /* system_h */

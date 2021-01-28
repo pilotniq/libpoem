@@ -6,6 +6,9 @@
 #define POEM_SPI_H
 
 #include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
+
 #include <poem/error.h>
 
 typedef struct sSPIchannel *SPIchannel;

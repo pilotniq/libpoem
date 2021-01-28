@@ -8,7 +8,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include <poem/i2c.h>
+#include <poem/i2c_master.h>
 
 typedef enum { ACC_RATE_POWER_DOWN = 0,
                ACC_RATE_1_HZ = 1,

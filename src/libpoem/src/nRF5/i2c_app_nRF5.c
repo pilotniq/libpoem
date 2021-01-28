@@ -1,5 +1,5 @@
 #include <string.h>  // for memcpy
-#include <poem/i2c.h>
+#include <poem/i2c_master.h>
 
 #include <poem/nRF5/error_nRF5.h>
 #include <poem/nRF5/i2c_app_nRF5.h>

@@ -20,7 +20,7 @@
 #include <stdint.h>
 #include <math.H>
 
-#include <poem/i2c.h>
+#include <poem/i2c_master.h>
 
 #include <poem/lsm303dlhc.h>
 

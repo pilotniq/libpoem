@@ -6,6 +6,7 @@
 //
 //
 
+#include <stddef.h>
 #include <poem/serial.h>
 
 Error serial_readToBuffer( SerialChannel channel, uint8_t *buffer, int readLength, int *cursor,
